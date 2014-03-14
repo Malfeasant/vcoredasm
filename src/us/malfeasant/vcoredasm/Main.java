@@ -114,6 +114,7 @@ public class Main {
 				}
 				off += fmt.moreBytes + 2;	// remember the instruction...
 				output.append(fmt.format(inst, bytes));
+				output.append("\n");
 			}
 			frame.pack();
 		} catch (IOException e) {
