@@ -102,55 +102,18 @@ public class Main {
 			int off = st + (int)offset.getValue();
 			in.skip(st);
 			while (output.getLineCount() < (int)lines.getValue()) {
-				int arga;
-				int argb;
-				output.append(String.format("%08x: ", off));
-				int inst = in.read();
-				inst |= (in.read() << 8);
+				int inst = in.read() | (in.read() << 8);
 				if (inst < 0) break;	// file ended, so done
-				output.append(String.format("%04x ", inst));
+				output.append(String.format("%08x: ", off));
 				InstructionFormat fmt = InstructionFormat.identify(inst);
-				off += fmt.totalBytes;
-				switch (fmt) {
-				case Scalar16:
-					output.append("\n");
-					// nothing more
-					break;
-				case Scalar32:
-					arga = in.read();
-					arga |= (in.read() << 8);
-					output.append(String.format("%04x\n", arga));
-					break;
-				case Scalar48:
-					arga = in.read();
-					arga |= (in.read() << 8);
-					arga |= (in.read() << 16);
-					arga |= (in.read() << 24);
-					output.append(String.format("%08x\n", arga));
-					break;
-				case Vector48:
-					arga = in.read() << 16;
-					arga |= (in.read() << 24);
-					arga |= (in.read() );
-					arga |= (in.read() << 8);
-					output.append(String.format("%08x\n", arga));
-					break;
-				case Vector80:
-					arga = in.read() << 16;
-					arga |= (in.read() << 24);
-					arga |= (in.read() );
-					arga |= (in.read() << 8);
-					output.append(String.format("%08x ", arga));
-					argb = in.read() << 16;
-					argb |= (in.read() << 24);
-					argb |= (in.read() );
-					argb |= (in.read() << 8);
-					output.append(String.format("%08x\n", argb));
-					break;
-				default:
-					output.append("Polly shouldn't be!");
-					break;
+				int len = fmt.moreBytes;
+				byte[] bytes = null;
+				if (len > 0) {
+					bytes = new byte[len];
+					in.read(bytes);
 				}
+				off += fmt.moreBytes + 2;	// remember the instruction...
+				output.append(fmt.format(inst, bytes));
 			}
 			frame.pack();
 		} catch (IOException e) {
